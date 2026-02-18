@@ -1,2 +1,3 @@
 # webappManager
-simple python program to run all your html services.
+
+simple go program to run all your html or npm services.

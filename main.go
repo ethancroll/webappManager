@@ -7,9 +7,12 @@ import (
 )
 
 func main() {
-	go mustRun("python", `C:\code\localFile\src`, "-m", "http.server", "3500")
-	go mustRun("npm", `C:\code\amiworking`, "run", "dev", "--", "-p", "3000")
-	mustRun("python", `C:\code\secretsHolder`, "-m", "http.server", "9000")
+	go mustRun(`C:\code\caddy\caddy.exe`, `C:\code\caddy`, "run", "--config", "Caddyfile")
+	go mustRun("python", `C:\code\localFile\src`, "-m", "http.server", "3005")
+	go mustRun("python", `C:\code\secretsHolder`, "-m", "http.server", "3004")
+	go mustRun("npm", `C:\code\ACTMail-admin`, "run", "dev", "--", "-p", "3000")
+	go mustRun("npm", `C:\code\ACTMail-client`, "run", "dev", "--", "-p", "3001")
+	mustRun("npm", `C:\code\ethanc`, "run", "dev", "--", "-p", "3002")
 }
 
 func mustRun(cmd, dir string, args ...string) {

@@ -9,6 +9,7 @@ A lightweight Go application for managing and running multiple web services conc
 
 - **Concurrent Execution**: Run multiple web services simultaneously using Go routines
 - **Flexible Service Support**: Compatible with any command-line executable service
+- **Caddy Reverse Proxy Support**: Route local domains to your dev services (e.g., `app.localhost` -> `localhost:3000`)
 - **Simple Configuration**: Easy-to-modify Go code for adding/removing services
 - **Output Streaming**: Real-time stdout/stderr output from all managed services
 - **Cross-Platform**: Works on Windows, macOS, and Linux
@@ -17,47 +18,72 @@ A lightweight Go application for managing and running multiple web services conc
 
 - Go 1.16 or higher
 - The command-line tools you want to run (e.g., `npm`, `python3`, etc.)
+- [Caddy](https://caddyserver.com/) installed if you want local domain reverse proxy support
 
 ## 🔧 Installation
 
 ### From Source
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/ethancroll/webappManager.git
 cd webappManager
 ```
 
 2. Build the application:
+
 ```bash
 go build -o webappManager main.go
 ```
 
 3. Run the executable:
+
 ```bash
 ./webappManager
 ```
 
 ## 💻 Usage
 
+### Reverse Proxy with Caddy (Local Domains)
+
+This project can start Caddy alongside your app servers so you can use friendly local domains instead of raw ports.
+
+Example flow:
+
+1. Add reverse proxy entries in your `Caddyfile` (for example, `admin.localhost` -> `localhost:3000`, `client.localhost` -> `localhost:3001`).
+2. Add local host mappings where needed:
+   - `127.0.0.1 admin.localhost`
+   - `127.0.0.1 client.localhost`
+3. Start everything with `webappManager`; Caddy and your services run together.
+
+From the current configuration, Caddy is launched like this:
+
+```go
+go mustRun(`C:\code\caddy\caddy.exe`, `C:\code\caddy`, "run", "--config", "Caddyfile")
+```
+
+Once running, use your local domains in the browser instead of `localhost:<port>`.
+
 ### Basic Configuration
 
-Edit the `main.go` file to configure your services. Each service is defined using the `run()` function:
+Edit the `main.go` file to configure your services. Each service is defined using the `mustRun()` function:
 
 ```go
 func main() {
-    go run("npm", "C:\\code\\localFile", "start")                          // Run Node.js server
-    run("python3", "C:\\code\\secretsHolder", "-m", "http.server", "9000") // Run Python HTTP server
+    go mustRun("npm", "C:\\code\\localFile", "start")                          // Run Node.js server
+    mustRun("python3", "C:\\code\\secretsHolder", "-m", "http.server", "9000") // Run Python HTTP server
 }
 ```
 
 ### Function Signature
 
 ```go
-func run(cmd, dir string, args ...string)
+func mustRun(cmd, dir string, args ...string)
 ```
 
 **Parameters:**
+
 - `cmd`: The command to execute (e.g., `"npm"`, `"python3"`, `"go"`)
 - `dir`: The working directory for the command
 - `args`: Variable number of command arguments
@@ -65,32 +91,36 @@ func run(cmd, dir string, args ...string)
 ### Examples
 
 #### Running an npm Development Server
+
 ```go
-go run("npm", "/home/user/my-react-app", "run", "dev")
+go mustRun("npm", "/home/user/my-react-app", "run", "dev")
 ```
 
 #### Running Multiple Python HTTP Servers
+
 ```go
-go run("python3", "/var/www/site1", "-m", "http.server", "8000")
-go run("python3", "/var/www/site2", "-m", "http.server", "8001")
+go mustRun("python3", "/var/www/site1", "-m", "http.server", "8000")
+go mustRun("python3", "/var/www/site2", "-m", "http.server", "8001")
 ```
 
 #### Running a Go Server
+
 ```go
-go run("go", "/home/user/my-go-api", "run", ".")
+go mustRun("go", "/home/user/my-go-api", "run", ".")
 ```
 
 #### Mixed Services
+
 ```go
 func main() {
-    go run("npm", "/path/to/frontend", "start")              // Frontend on port 3000
-    go run("npm", "/path/to/backend", "run", "dev")          // Backend API
-    go run("python3", "/path/to/docs", "-m", "http.server", "8080") // Documentation server
-    run("go", "/path/to/microservice", "run", "main.go")     // Go microservice (blocking call)
+    go mustRun("npm", "/path/to/frontend", "start")              // Frontend on port 3000
+    go mustRun("npm", "/path/to/backend", "run", "dev")          // Backend API
+    go mustRun("python3", "/path/to/docs", "-m", "http.server", "8080") // Documentation server
+    mustRun("go", "/path/to/microservice", "run", "main.go")     // Go microservice (blocking call)
 }
 ```
 
-**Note:** All `run()` calls except the last one should be prefixed with `go` to run concurrently. The last call should be blocking to keep the program alive.
+**Note:** All `mustRun()` calls except the last one should be prefixed with `go` to run concurrently. The last call should be blocking to keep the program alive.
 
 ## 🛠️ How It Works
 
@@ -105,7 +135,7 @@ The application uses Go's `os/exec` package to manage external processes:
 
 - **Path Formats**: Use forward slashes (`/`) on Unix-like systems and backslashes (`\\`) on Windows, or use `filepath.Join()` for cross-platform compatibility
 - **Port Conflicts**: Ensure each service uses a unique port to avoid conflicts
-- **Blocking Call**: Always have at least one non-concurrent `run()` call to prevent the program from exiting immediately
+- **Blocking Call**: Always have at least one non-concurrent `mustRun()` call to prevent the program from exiting immediately
 - **Error Handling**: Monitor the console output for any service errors
 
 ## 🤝 Contributing
@@ -136,6 +166,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🐛 Issues and Support
 
 If you encounter any issues or have questions:
+
 - Open an issue on [GitHub Issues](https://github.com/ethancroll/webappManager/issues)
 - Provide detailed information about your environment and the problem
 
